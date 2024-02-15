@@ -1,0 +1,35 @@
+{% extends 'main.html' %}
+
+{% block title %}
+Task
+{% endblock %}
+
+{% block content %}
+<h1>Create Task</h1>
+<form method="post">
+  {% csrf_token %}
+    <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" class="form-control" id="title" name="title" required>
+    </div>
+    <div class="form-group">
+        <label for="description">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+    </div>
+    <div class="form-group">
+        <label for="deadline">Deadline</label>
+        <input type="date" class="form-control" id="deadline" name="deadline" required>
+    </div>
+    <div class="form-group">
+        <label for="status">Status</label>
+        <!-- <input type="text" class="form-control" id="status" name="status" required> -->
+        <select class="form-control" id="status" name="status">
+            <option value="Ongoing">Ongoing</option>
+            <option value="Completed">Completed</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Create Task</button>
+</form>
+
+{% endblock %}
+
