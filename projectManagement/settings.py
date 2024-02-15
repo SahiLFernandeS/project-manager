@@ -78,24 +78,14 @@ WSGI_APPLICATION = 'projectManagement.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    # "default": {
-    #     "ENGINE": os.getenv('Engine'),
-    #     "OPTIONS": {
-    #         "database": os.getenv("DATABASE"),
-    #         "host": os.getenv("HOST"),
-    #         "user": os.getenv("USER"),
-    #         "password": os.getenv("PASSWORD"),
-    #         "port": int(os.getenv("PORT")),
-    #     },
-    # }
-     "default": {
-        "ENGINE": 'django.db.backends.mysql',
+    "default": {
+        "ENGINE": os.getenv('Engine'),
         "OPTIONS": {
-            "database": 'project_management',
-            "host": 'localhost',
-            "user": 'root',
-            "password": 'Sahil@123',
-            "port": 3306,
+            "database": os.getenv("DATABASE"),
+            "host": os.getenv("HOST"),
+            "user": os.getenv("USER"),
+            "password": os.getenv("PASSWORD"),
+            "port": int(os.getenv("PORT")),
         },
     }
 }
