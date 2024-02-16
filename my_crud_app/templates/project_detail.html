@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Project
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+      <h5>Project Details</h5>
+  </div>
+  <div class="card-body">
+      <h5 class="card-title">{{ project.name }}</h5>
+      <p class="card-text">{{ project.description }}</p>
+      <p class="card-text"><strong>Start Date:</strong> {{ project.start_date }}</p>
+      <p class="card-text"><strong>End Date:</strong> {{ project.end_date }}</p>
+  </div>
+</div>
+
+<div class="mt-4">
+  <h5>Tasks Assigned to the Project</h5>
+  <div class="col-md-4 mt-2 mb-2">
+    <h3>ADD Task</h3>
+    <form id="addTask" action="">
+        {% csrf_token %}
+      <div class="form-group">
+        <input class="form-control" type="text" name="title" placeholder="Title" required>
+      </div>
+      <div class="form-group">
+        <input class="form-control" type="text" name="description" placeholder="Description" required>
+      </div>
+      <div class="form-group">
+        <input class="form-control" type="date" name="deadline" required>
+      </div>
+      <div class="form-group">
+        <input class="form-control" type="text" name="status" placeholder="Status" required>
+      </div>
+      
+      <button class="btn btn-primary form-control" type="submit">SUBMIT</button>
+    </form>
+  </div>
+
+  <div class="col-md-8">
+    <h3>Tasks</h3>
+    <table id="taskTable" class="table table-striped">
+      <tr>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Deadline</th>
+        <th colspan="4">Status</th>
+      </tr>
+      {% for task in tasks %}
+      <tr id="task-{{task.id}}">
+          <td class="taskTitle taskData" name="name">{{task.title}}</td>
+          <td class="taskDescription taskData" name="description">{{task.description}}</td>
+          <td class="taskDeadline taskData" name="deadline">{{task.deadline|date:'Y-m-d'}}</td>
+          <td class="taskStatus taskData" name="status">{{task.status}}</td>
+          <td align="center">
+            <button class="btn btn-success form-control" onClick="editTask({{task.id}})" data-toggle="modal" data-target="#myModal")">EDIT</button>
+          </td>
+          <td align="center">
+            <button class="btn btn-danger form-control" onClick="deleteTask({{task.id}})">DELETE</button>
+          </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+    
+</div>
+
+<!-- update task modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">Update Task</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="updateTask" action="">
+      <div class="modal-body">
+          <input class="form-control" id="form-id" type="hidden" name="formId"/>
+          <label for="title">Title</label>
+          <input class="form-control" id="form-title" type="text" name="formTitle"/>
+          <label for="description">Description</label>
+          <input class="form-control" id="form-description" type="text" name="formDescription"/>
+          <label for="deadline">Deadline</label>
+          <input class="form-control" id="form-deadline" type="date" name="formDeadline" />
+          <label for="status">Status</label>
+          <input class="form-control" id="form-status" type="text" name="formStatus" />
+      </div>
+      <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" >Save changes</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascript %}
+<script>
+
+function appendToTaskTable(task) {
+  $("#taskTable > tbody:last-child").append(`
+        <tr id="task-${task.id}">
+            <td class="taskTitle" name="title">${task.title}</td>
+            '<td class="taskDescription" name="description">${task.description}</td>
+            '<td class="taskDeadline" name="deadline">${task.deadline}</td>
+            <td class="taskStatus taskData" name="status">${task.status}</td>
+            <td align="center">
+              <button class="btn btn-success form-control" onClick="editTask(${task.id})" data-toggle="modal" data-target="#myModal")">EDIT</button>
+            </td>
+            <td align="center">
+              <button class="btn btn-danger form-control" onClick="deleteTask(${task.id})">DELETE</button>
+            </td>
+        </tr>
+    `);
+}
+
+function editTask(id) {
+  if (id) {
+    tr_id = "#task-" + id;
+    title = $(tr_id).find(".taskTitle").text();
+    description = $(tr_id).find(".taskDescription").text();
+    deadline = $(tr_id).find(".taskDeadline").text();
+    status = $(tr_id).find(".taskStatus").text();
+    
+    $('#form-id').val(id);
+    $('#form-title').val(title);
+    $('#form-description').val(description);
+    $('#form-deadline').val(deadline);
+    $('#form-status').val(status);
+  }
+}
+
+$("form#addTask").submit(function() {
+    var titleInput = $('input[name="title"]').val().trim();
+    var descriptionInput = $('input[name="description"]').val().trim();
+    var deadlineInput = $('input[name="deadline"]').val().trim();
+    var statusInput = $('input[name="status"]').val().trim();
+    if (titleInput && descriptionInput && deadlineInput && statusInput) {
+
+        $.ajax({
+            url: '{% url "task_create" %}',
+            method: "post",
+            data: {
+                'title': titleInput,
+                'description': descriptionInput,
+                'deadline': deadlineInput,
+                'status': statusInput,
+                'project_id': "{{project.id}}"
+            },
+            dataType: 'json',
+            success: function (data) {
+                if (data.task) {
+                    appendToTaskTable(data.task);
+                }
+            }
+        });
+
+    } else {
+        alert("All fields must have a valid value.");
+    }
+    $('form#addTask').trigger("reset");
+    return false;
+});
+
+
+function updateToTaskTabel(task){
+    $("#taskTable #task-" + task.id).children(".taskData").each(function() {
+        var attr = $(this).attr("name");
+        console.log("attr --> ", attr);
+        if (attr == "name") {
+          $(this).text(task.title);
+        } else if (attr == "description") {
+          $(this).text(task.description);
+        } else if (attr == "deadline") {
+          $(this).text(task.deadline);
+        } else {
+          $(this).text(task.status);
+        }
+      });
+}
+
+
+$("form#updateTask").submit(function() {
+    var idInput = $('input[name="formId"]').val().trim();
+    var titleInput = $('input[name="formTitle"]').val().trim();
+    var description = $('input[name="formDescription"]').val().trim();
+    var deadlineInput = $('input[name="formDeadline"]').val().trim();
+    var statusInput = $('input[name="formStatus"]').val().trim();
+    if (titleInput && description && deadlineInput && statusInput) {
+        // Create Ajax Call
+        $.ajax({
+            url: '{% url "task_update" %}',
+            method: "post",
+            data: {
+                'id': idInput,
+                'title': titleInput,
+                'description': description,
+                'deadline': deadlineInput,
+                'status': statusInput
+            },
+            dataType: 'json',
+            success: function (data) {
+                if (data.task) {
+                  updateToTaskTabel(data.task);
+                }
+            }
+        });
+
+    } else {
+        alert("All fields must have a valid value.");
+    }
+    $('form#updateTask').trigger("reset");
+    $('#myModal').modal('hide');
+    return false;
+});
+
+
+function deleteTask(id) {
+  var action = confirm("Are you sure you want to delete this project?");
+  if (action != false) {
+    $.ajax({
+        url: '{% url "task_delete" %}',
+        method: "post",
+        data: {
+          'id': id,
+        },
+        dataType: 'json',
+        success: function (data) {
+            if (data.deleted) {
+              $("#taskTable #task-" + id).remove();
+            }
+        }
+    });
+  }
+}
+
+</script>
+{% endblock %}
+
+<!-- <td align="center">
+            <a href="{% url 'task_detail' task.id %}"><button class="btn btn-info form-control">INFO</button></a>
+          </td>
+          <td align="center">
+              <button class="btn btn-success form-control" onClick="editProject({{project.id}})" data-toggle="modal" data-target="#myModal")">EDIT</button>
+          </td>
+           <td align="center">
+              <button class="btn btn-danger form-control" onClick="deleteProject({{project.id}})">DELETE</button>
+          </td>  -->
