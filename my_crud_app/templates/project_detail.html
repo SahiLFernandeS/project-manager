@@ -5,21 +5,24 @@ Project
 {% endblock %}
 
 {% block content %}
-<div class="card">
-  <div class="card-header">
-      <h5>Project Details</h5>
-  </div>
-  <div class="card-body">
-      <h5 class="card-title">{{ project.name }}</h5>
-      <p class="card-text">{{ project.description }}</p>
-      <p class="card-text"><strong>Start Date:</strong> {{ project.start_date }}</p>
-      <p class="card-text"><strong>End Date:</strong> {{ project.end_date }}</p>
-  </div>
-</div>
 
-<div class="mt-4">
-  <h5>Tasks Assigned to the Project</h5>
-  <div class="col-md-4 mt-2 mb-2">
+<div class="mt-4 ">
+  <a href="{% url 'project_list' %}" class="btn btn-primary back-button mb-3">&lt; Back</a>
+  <div class="card">
+    <div class="card-header">
+        <h5>Project Details</h5>
+    </div>
+    <div class="card-body">
+        <h5 class="card-title">{{ project.name }}</h5>
+        <p class="card-text">{{ project.description }}</p>
+        <p class="card-text"><strong>Start Date:</strong> {{ project.start_date }}</p>
+        <p class="card-text"><strong>End Date:</strong> {{ project.end_date }}</p>
+        <div class="progress">
+          <div class="progress-bar" role="progressbar" style="width: {{ progress_percentage }}%;" aria-valuenow="{{ progress_percentage }}" aria-valuemin="0" aria-valuemax="100">{{ progress_percentage }}%</div>
+        </div>
+    </div>
+  </div>
+  <div class="col-12 mt-4 mb-2">
     <h3>ADD Task</h3>
     <form id="addTask" action="">
         {% csrf_token %}
@@ -40,8 +43,43 @@ Project
     </form>
   </div>
 
-  <div class="col-md-8">
-    <h3>Tasks</h3>
+  <div class="col-12 mt-4">
+    <h5>Tasks</h5>
+    <form>
+      <div class="row">
+        <div class="col-12 col-xs-12">
+          <div class="form-group">
+            <label for="from_date">From Date</label>
+            <input class="form-control" type="date" name="from_date" />
+          </div>
+        </div>
+        <div class="col-12 col-xs-12">
+          <div class="form-group">
+            <label for="to_date">To Date</label>
+            <input class="form-control" type="date" name="to_date" />
+          </div>
+        </div>
+        <div class="col-12 col-xs-12">
+          <div class="form-group">
+            <label>Status</label><br>
+            <select class="form-control" id="status" name="status">
+              <option value="">select</option>
+              <option value="Ongoing">Ongoing</option>
+              <option value="Completed">Completed</option>
+          </select>
+          </div>
+        </div>
+        <div class="col-12 col-xs-12">
+          <div class="form-group">
+
+            <button type="submit" class="btn btn-primary">Apply Filter</button>
+            <a href="{% url 'project_detail' project.id %}"><button type="button" class="btn btn-danger">reset Filter</button></a>
+          </div>
+        </div>
+      </div>        
+    </div>
+            
+  </form>
     <table id="taskTable" class="table table-striped">
       <tr>
         <th>Title</th>
@@ -54,11 +92,16 @@ Project
           <td class="taskTitle taskData" name="name">{{task.title}}</td>
           <td class="taskDescription taskData" name="description">{{task.description}}</td>
           <td class="taskDeadline taskData" name="deadline">{{task.deadline|date:'Y-m-d'}}</td>
-          <td class="taskStatus taskData" name="status">{{task.status}}</td>
-          <td align="center">
+          <!-- <td class="taskStatus taskData" name="status">{{task.status}}</td> -->
+          {% if task.status == 'Completed' %}
+              <td class="taskStatus taskData"><span class="badge badge-success">Completed</span></td>
+          {% else %}
+              <td class="taskStatus taskData"><span class="badge badge-primary">Ongoing</span></td>
+          {% endif %}
+          <td>
             <button class="btn btn-success form-control" onClick="editTask({{task.id}})" data-toggle="modal" data-target="#myModal")">EDIT</button>
           </td>
-          <td align="center">
+          <td>
             <button class="btn btn-danger form-control" onClick="deleteTask({{task.id}})">DELETE</button>
           </td>
       </tr>
@@ -103,16 +146,22 @@ Project
 <script>
 
 function appendToTaskTable(task) {
+  let statusText = ``;
+  if (task.status == 'Completed') {
+    statusText = `<td class="taskStatus taskData"><span class="badge badge-success">Completed</span></td>`
+  }else {
+    statusText = `<td class="taskStatus taskData"><span class="badge badge-primary">Ongoing</span></td>`
+  }
   $("#taskTable > tbody:last-child").append(`
         <tr id="task-${task.id}">
             <td class="taskTitle" name="title">${task.title}</td>
             '<td class="taskDescription" name="description">${task.description}</td>
             '<td class="taskDeadline" name="deadline">${task.deadline}</td>
-            <td class="taskStatus taskData" name="status">${task.status}</td>
-            <td align="center">
+            ${statusText}
+            <td>
               <button class="btn btn-success form-control" onClick="editTask(${task.id})" data-toggle="modal" data-target="#myModal")">EDIT</button>
             </td>
-            <td align="center">
+            <td>
               <button class="btn btn-danger form-control" onClick="deleteTask(${task.id})">DELETE</button>
             </td>
         </tr>
@@ -171,7 +220,6 @@ $("form#addTask").submit(function() {
 function updateToTaskTabel(task){
     $("#taskTable #task-" + task.id).children(".taskData").each(function() {
         var attr = $(this).attr("name");
-        console.log("attr --> ", attr);
         if (attr == "name") {
           $(this).text(task.title);
         } else if (attr == "description") {
@@ -179,7 +227,11 @@ function updateToTaskTabel(task){
         } else if (attr == "deadline") {
           $(this).text(task.deadline);
         } else {
-          $(this).text(task.status);
+          if (task.status == "Completed") {
+            $(this).html('<span class="badge badge-success">' + task.status + '</span>');
+          }else {
+            $(this).html('<span class="badge badge-primary">' + task.status + '</span>');
+          }
         }
       });
 }
@@ -241,13 +293,3 @@ function deleteTask(id) {
 
 </script>
 {% endblock %}
-
-<!-- <td align="center">
-            <a href="{% url 'task_detail' task.id %}"><button class="btn btn-info form-control">INFO</button></a>
-          </td>
-          <td align="center">
-              <button class="btn btn-success form-control" onClick="editProject({{project.id}})" data-toggle="modal" data-target="#myModal")">EDIT</button>
-          </td>
-           <td align="center">
-              <button class="btn btn-danger form-control" onClick="deleteProject({{project.id}})">DELETE</button>
-          </td>  -->

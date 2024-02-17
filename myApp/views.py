@@ -1,4 +1,6 @@
 from django.shortcuts import get_object_or_404, render, redirect
+
+from my_crud_app.models import *
 from .models import *
 from django.db.models import Q
 
@@ -13,14 +15,13 @@ def login(request):
             employee = Employee.objects.filter(Q(username=username) | Q(email=email))
 
             if not employee:
-                print("hello")
                 return render(request, "login.html", {"errorMessage": "Invalid username/email or password"})
             
             if password != employee[0].password:
                 print("hell2o")
                 return render(request, "login.html", {"errorMessage": "Invalid username/email or password"})
             
-            return redirect("project_list")
+            return redirect("/v1/project_list")
         return render(request, "login.html")
     except Exception as e:
         pass
@@ -55,7 +56,7 @@ def project_create(request):
             project = Project(name=name, description=description, start_date=start_date, end_date=end_date)
             project.save()
 
-            return redirect("project_list")
+            return redirect("/v1/project_list")
         return render(request, 'project_form.html')
     except Exception as e:
         print("project_create Error: ", e)
@@ -74,7 +75,7 @@ def project_update(request, project_id):
                                                          description=description, 
                                                          start_date=start_date, 
                                                          end_date=end_date)
-            return redirect(f"/project_list")
+            return redirect(f"/v1/project_list")
         return render(request, 'update_project.html', {"project": project})
     except Exception as e:
         print("project_update Error: ", e)
@@ -103,7 +104,7 @@ def task_create(request, project_id):
 
             task = Task(title=title, description=description, deadline=deadline, status=status, project_id=project_id)
             task.save()
-            return redirect(f"/project_detail/{project_id}")
+            return redirect(f"/v1/project_detail/{project_id}")
         return render(request, 'task_form.html')
     except Exception as e:
         print("task_create Error: ", e)
@@ -120,7 +121,7 @@ def task_update(request, task_id):
             status = request.POST.get("status")
 
             Task.objects.filter(id=task_id).update(title=title, description=description, deadline=deadline, status=status)
-            return redirect(f"/project_detail/{task.project_id}")
+            return redirect(f"/v1/project_detail/{task.project_id}")
         return render(request, 'update_task.html', {'task': task})
     except Exception as e:
         print("task_update Error: ", e)

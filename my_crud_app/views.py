@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
 from .models import *
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
 
 # Create your views here.
 def projects(request):
@@ -78,9 +79,36 @@ def project_update(request):
     
 @csrf_exempt
 def project_detail(request, project_id):
+    from_date = request.GET.get("from_date", None)
+    to_date = request.GET.get("to_date", None)
+    status = request.GET.get("status", None)
+
     project = get_object_or_404(Project, pk=project_id)
-    tasks = Task.objects.filter(project=project)
-    return render(request, 'project_detail.html', {'project': project, 'tasks': tasks})
+    task = Task.objects.filter(project=project)  # Assuming you have a related_name 'tasks' in your Project model for the Task queryset
+    
+    total_tasks = task.count()
+    completed_tasks = task.filter(status="Completed").count()
+    
+    # Calculate the percentage of completed tasks
+    if total_tasks > 0:
+        progress_percentage = (completed_tasks / total_tasks) * 100
+    else:
+        progress_percentage = 0
+
+    query = {
+        "project": project
+    }
+    if from_date:
+        query["deadline__gte"] = from_date
+
+    if to_date:
+        query["deadline__lte"] = to_date
+
+    if status:
+        query["status"] = status
+
+    tasks = Task.objects.filter(Q(**query))
+    return render(request, 'project_detail.html', {'project': project, 'tasks': tasks, 'progress_percentage': progress_percentage})
 
 @csrf_exempt
 def task_create(request):

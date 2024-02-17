@@ -1,6 +1,6 @@
 from django.db import models
 
-
+"""
 class Employee(models.Model):
 
     ROLE_CHOICES = [ 
@@ -51,3 +51,4 @@ class Task(models.Model):
     
     class Meta:
         db_table = 'Task'
+"""
